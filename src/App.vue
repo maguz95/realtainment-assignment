@@ -8,6 +8,12 @@
     </div>
     <template v-else-if="!isFirstLoad && repositories.length > 0">
       <repository-list :repositories="repositories"/>
+      <pagination
+        class="mt-10"
+        v-if="repositories.length > 0"
+        :itemsAmount="totalRepositories"
+        :itemsPerPage="30"
+        @change-page="fetchRepositories" />
     </template>
     <div v-else>
       There are no repositories to show, please try with a new search
@@ -21,12 +27,14 @@ import axios from 'axios'
 import { ref } from '@vue/reactivity'
 import SearchInput from '@/components/atoms/SearchInput.vue'
 import RepositoryList from '@/components/molecules/RepositoryList.vue'
+import Pagination from '@/components/molecules/Pagination.vue'
 
 export default {
   name: 'Home',
   components: {
     SearchInput,
     RepositoryList,
+    Pagination
   },
   setup() {
     // Search input setup
@@ -38,24 +46,29 @@ export default {
 
     // Fetch repositories
     const repositories = ref([])
+    const totalRepositories = ref(0)
     const isFirstLoad = ref(true)
     const fetchRepositories = (pageNumber) =>{
       isLoading.value = true
       axios.get(`https://api.github.com/search/repositories?q=${searchQuery.value}&page=${pageNumber}&per_page=30`)
         .then(response => {
           repositories.value = response.data.items
+          totalRepositories.value = response.data.total_count
           isFirstLoad.value = false
         })
     }
+
     return {
       searchSetup,
       repositories,
+      totalRepositories,
       isFirstLoad,
       fetchRepositories,
     }
   }
 }
 </script>
+
 <style lang="scss">
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
@@ -65,5 +78,7 @@ export default {
   color: #2c3e50;
 }
 
+.icon{
+  @apply w-5 h-5
 }
 </style>
