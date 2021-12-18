@@ -1,4 +1,7 @@
 <template>
+  <modal :show="isError" @close="handleError">
+    <p class="text-2xl text-center">Something went terribly wrong. <br>We are unable to fetch contributors data</p>
+  </modal>
   <div class="p-10 transition duration-300 transform bg-white cursor-pointer rounded-3xl hover:shadow-card group">
     <div class="flex items-center" @click="toggleGraph">
       <div class="flex flex-col flex-grow gap-3 lg:gap-2">
@@ -39,12 +42,32 @@
           </div>
         </div>
       </div>
+      <div>
+        <svg xmlns="http://www.w3.org/2000/svg" class="duration-200 transform icon" :class="{'rotate-90': showGraph}" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+          <polyline points="9 6 15 12 9 18" />
+        </svg>
+      </div>
+    </div>
+    <div v-show="showGraph">
+      <vue-apex-charts
+        type="bar"
+        v-if="isDataLoaded"
+        :options="chartOptions"
+        :series="series"
+      ></vue-apex-charts>
     </div>
   </div>
 </template>
 
 <script>
+import axios from "axios"
+import VueApexCharts from "vue3-apexcharts"
+
 import { ref } from '@vue/reactivity'
+
+import Modal from '@/components/molecules/Modal.vue'
+
 export default {
   props: {
     repository: {
@@ -52,5 +75,93 @@ export default {
       required: true
     }
   },
+  components: { VueApexCharts, Modal },
+  setup (props) {
+
+    // Toggle graph
+    const showGraph = ref(false)
+    const toggleGraph = () => {
+      showGraph.value = !showGraph.value
+      if(showGraph.value) {
+        fetchGraphData()
+      }
+    }
+
+    // chart options and series setup
+    const chartOptions = ref({
+      chart: {
+        id: "contributions-chart",
+      },
+      xaxis: {
+        categories: [],
+      },
+      responsive: [{
+          breakpoint: 720,
+          options: {
+            chart:{
+              height: 600,
+            },
+            legend: {
+              show: false,
+            },
+          },
+      }]
+    })
+    const series = ref([
+      {
+        name: "contributions",
+        data: [],
+      }
+    ])
+
+    // Fetch graph data
+    const isDataLoaded = ref(false)
+    const isError = ref(false)
+    const fetchGraphData = () => {
+      axios.get(`https://api.github.com/repos/${props.repository.full_name}/contributors`)
+        .then(response => {
+          response.data.forEach(element => {
+            chartOptions.value = {
+              ...chartOptions.value,
+              xaxis: {
+                categories: chartOptions.value.xaxis.categories.concat(element.login),
+              }
+            }
+          });
+
+          console.log(chartOptions.value);
+
+          series.value = response.data.map(item => {
+            return {
+              name: item.login,
+              data: [item.contributions]
+            }
+          })
+        })
+        .finally(() => {
+          isDataLoaded.value = true
+        })
+        .catch(() => {
+          showGraph.value = false
+          isDataLoaded.value = false
+          isError.value = true
+        })
+    }
+
+    // Handle error modal close event
+    const handleError = () => {
+      isError.value = false
+    }
+
+    return {
+      toggleGraph,
+      showGraph,
+      chartOptions,
+      series,
+      isDataLoaded,
+      isError,
+      handleError
+    }
+  }
 }
 </script>
