@@ -1,8 +1,8 @@
 <template>
   <teleport to="body">
-    <div v-if="show" @click="tryClose" class="fixed top-0 left-0 z-10 w-full h-screen bg-black opacity-75"></div>
+    <div v-if="show" @click="tryClose" class="fixed top-0 left-0 z-10 w-full h-screen bg-black/75"></div>
     <transition name="dialog">
-      <dialog open v-if="show" class="fixed z-10 w-4/5 m-0 overflow-hidden bg-white border-0 rounded-3xl">
+      <dialog open v-if="show" class="fixed z-10 w-4/5 m-0 overflow-hidden bg-white border-0 rounded-3xl top-[20vh] left-[10%]">
         <section class="flex justify-center p-8">
           <slot></slot>
         </section>
@@ -18,6 +18,7 @@
 
 <script>
 export default {
+  name: 'BasicModal',
   props: {
     show: {
       type: Boolean,
@@ -46,12 +47,6 @@ export default {
 </script>
 
 <style scoped>
-
-dialog {
-  top: 20vh;
-  left: 10%;
-}
-
 .dialog-enter-from,
 .dialog-leave-to {
   opacity: 0;

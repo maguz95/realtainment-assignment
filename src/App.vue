@@ -37,7 +37,6 @@ import Pagination from '@/components/molecules/Pagination.vue'
 import Modal from '@/components/molecules/Modal.vue'
 
 export default {
-  name: 'Home',
   components: {
     Modal,
     SearchInput,

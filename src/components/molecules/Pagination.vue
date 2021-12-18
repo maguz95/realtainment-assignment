@@ -24,6 +24,7 @@
 import { computed, ref } from '@vue/reactivity'
 
 export default {
+  name: 'BasicNavigation',
   props: {
     itemsAmount: {
       type: Number,
