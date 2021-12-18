@@ -1,4 +1,10 @@
 <template>
+  <modal :show="isLoading" fixed>
+    <p class="text-2xl">Please wait while we fetch the repositories...</p>
+  </modal>
+  <modal :show="isError" @close="handleError">
+    <p class="text-2xl text-center">Something went terribly wrong. <br>Please try again with a different keyword :)</p>
+  </modal>
   <div class="flex flex-col items-center min-h-screen p-10 bg-gray-100">
     <h1 class="text-3xl font-semibold">Github repository index</h1>
     <p class="mt-4">Search your favourite repositories and view the contributions' graph</p>
@@ -28,10 +34,12 @@ import { ref } from '@vue/reactivity'
 import SearchInput from '@/components/atoms/SearchInput.vue'
 import RepositoryList from '@/components/molecules/RepositoryList.vue'
 import Pagination from '@/components/molecules/Pagination.vue'
+import Modal from '@/components/molecules/Modal.vue'
 
 export default {
   name: 'Home',
   components: {
+    Modal,
     SearchInput,
     RepositoryList,
     Pagination
@@ -47,7 +55,9 @@ export default {
     // Fetch repositories
     const repositories = ref([])
     const totalRepositories = ref(0)
+    const isLoading = ref(false)
     const isFirstLoad = ref(true)
+    const isError = ref(false)
     const fetchRepositories = (pageNumber) =>{
       isLoading.value = true
       axios.get(`https://api.github.com/search/repositories?q=${searchQuery.value}&page=${pageNumber}&per_page=30`)
@@ -55,15 +65,29 @@ export default {
           repositories.value = response.data.items
           totalRepositories.value = response.data.total_count
           isFirstLoad.value = false
+          isLoading.value = false
         })
+        .catch(() => {
+          isLoading.value = false
+          isError.value = true
+        })
+    }
+
+    // Handle error modal close event
+    const handleError = () => {
+      searchQuery.value = ''
+      isError.value = false
     }
 
     return {
       searchSetup,
       repositories,
       totalRepositories,
+      isLoading,
       isFirstLoad,
+      isError,
       fetchRepositories,
+      handleError
     }
   }
 }
