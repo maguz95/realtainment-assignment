@@ -62,6 +62,8 @@
 
 <script>
 import axios from "axios"
+import { cacheAdapterEnhancer } from "axios-extensions"
+import LRUCache from "lru-cache"
 import VueApexCharts from "vue3-apexcharts"
 
 import { ref } from '@vue/reactivity'
@@ -113,6 +115,16 @@ export default {
         data: [],
       }
     ])
+
+    const defaultCache = new LRUCache({ maxAge: 1000*60*60 });
+
+    axios.create({
+      headers: { 'Cache-Control': 'no-cache' },
+      // cache will be enabled by default
+      adapter: cacheAdapterEnhancer(axios.defaults.adapter, {
+        defaultCache
+      }),
+    })
 
     // Fetch graph data
     const isDataLoaded = ref(false)

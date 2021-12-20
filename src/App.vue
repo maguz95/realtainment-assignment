@@ -29,6 +29,8 @@
 
 <script>
 import axios from 'axios'
+import {cacheAdapterEnhancer} from 'axios-extensions'
+import LRUCache from 'lru-cache'
 
 import { ref } from '@vue/reactivity'
 import SearchInput from '@/components/atoms/SearchInput.vue'
@@ -50,6 +52,16 @@ export default {
       searchQuery.value = e.target.value
       fetchRepositories(1)
     }
+
+    const defaultCache = new LRUCache({ maxAge: 1000*60*60 });
+
+    axios.create({
+      headers: { 'Cache-Control': 'no-cache' },
+      // cache will be enabled by default
+      adapter: cacheAdapterEnhancer(axios.defaults.adapter, {
+        defaultCache
+      }),
+    })
 
     // Fetch repositories
     const repositories = ref([])
